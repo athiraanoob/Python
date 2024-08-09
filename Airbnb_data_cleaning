@@ -1,0 +1,59 @@
+import pandas as pd
+#from fpdf import FPDF
+import numpy as np
+
+url = 'C:\\Users\\athir\\OneDrive\\Documents\\Athira Doc\\Airbnb_Open_Data.csv'
+data = pd.read_csv(url)
+print(f"length of data before dropping duplicates{len(data)}")
+#print(data['price'].isnull().any())
+print(data['availability 365'].isnull().any())
+columns_to_remove=['host_identity_verified','lat','long','instant_bookable','Construction year','minimum nights','number of reviews','last review','reviews per month','calculated host listings count','license']
+data.drop(columns=columns_to_remove,inplace=True)
+data.drop_duplicates(inplace=True)
+print(f"length of data after dropping duplicates {len(data)}")
+column_name = 'id'
+duplicates = data.duplicated(subset=column_name)
+print(duplicates.any())
+if duplicates.any():
+    duplicated_rows = data[data.duplicated(subset=column_name, keep=False)]
+    print("Duplicated rows:")
+    print(len(duplicated_rows))
+else:
+    print("No duplicates found.")
+data_types=data.dtypes
+print(data_types)
+data.dropna()
+print(len(data))
+def filling_blanks(dataf,n,b):
+    if b=='review rate number' or b=='availability 365':
+       average=round(n.mean())
+       number1=str(average)
+       dataf[b]=dataf[b].fillna(number1)
+       print(dataf[b].head(63))
+    else: 
+       number=n.str.lstrip('$')
+       n1=pd.to_numeric(number, errors='coerce')
+       average=round(n1.mean())
+       number1=str(average)
+       new_servicefee='$'+number1
+       dataf[b]=dataf[b].fillna(new_servicefee)
+       print(dataf[b].head(50))
+    return dataf
+data=filling_blanks(data,data['service fee'],'service fee')
+data=filling_blanks(data,data['price'],'price')
+data=filling_blanks(data,data['review rate number'],'review rate number')
+data=filling_blanks(data,data['availability 365'],'availability 365')
+data['review rate number']=data['review rate number'].astype(int)
+data['availability 365']=data['availability 365'].astype(int)
+for i, j in zip(data['country'],data['country code']):
+    if i=='United States' and j!='US':
+        data['country code']='US'
+       # print(i,j)
+    if i!='United States' and j=='US':
+        #print(i,j)
+        data['country']='United States'
+print(f"Missing values count {data.isnull().sum().sort_values(ascending=True)}")
+        
+data.columns=data.columns.str.upper()
+print(data)
+#data.to_excel('dataframe1.xlsx', index=False, sheet_name='Sheet1')
